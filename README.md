@@ -2,7 +2,7 @@
 
 > A powerful batch visualization tool for aggregating and comparing TensorBoard scalar metrics across multiple experimental runs.
 
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## ✨ Features
@@ -17,41 +17,84 @@
 
 ## 📋 Requirements
 
-- Python 3.7+
-- TensorFlow/TensorBoard
-- NumPy, Matplotlib
+- Python 3.6+ (compatible with Python 3.6 through 3.12+)
+- TensorBoard (any recent version)
+- NumPy (any recent version)
+- Matplotlib (any recent version)
+
+All dependencies will be automatically installed with the package.
 
 ## ⚡ Installation
 
+### Option 1: Install as a Package (Recommended)
+
+Install the tool globally with automatic dependency management:
+
+```bash
+# Clone or download the project
+cd TB-Metrics-Visualizer
+
+# Install in editable mode (for development)
+pip install -e .
+
+# Or install normally
+pip install .
+```
+
+After installation, you can use the `tb-visualizer` or `tbviz` command anywhere:
+
+```bash
+tb-visualizer ./run1 ./run2 -o results.png
+```
+
+### Option 2: Manual Installation
+
+If you prefer to run the script directly:
+
 ```bash
 pip install -r requirements.txt
+python main.py ./run1 ./run2 -o results.png
 ```
+
+### Uninstallation
+
+To uninstall the globally installed command:
+
+```bash
+pip uninstall tb-metrics-visualizer
+```
+
+See [INSTALL.md](INSTALL.md) for detailed installation instructions and troubleshooting.
 
 ## 🚀 Quick Start
 
 **Basic usage** — combine all metrics from two runs:
 ```bash
+# Using installed command
+tb-visualizer ./run1 ./run2 -o results.png
+
+# Or using Python script directly
 python main.py ./run1 ./run2 -o results.png
 ```
 
 **Multiple runs with wildcards**:
 ```bash
-python main.py ./experiments/* -o output.png
+tb-visualizer ./experiments/* -o output.png
 ```
 
 **Show visualization window**:
 ```bash
-python main.py ./logs --show
+tb-visualizer ./logs --show
 ```
 
 **Enable curve smoothing**:
 ```bash
-python main.py ./logs --smooth ema --smooth-window 10
+tb-visualizer ./logs --smooth ema --smooth-window 10
 ```
 
 **Show raw and smoothed curves together**:
 ```bash
-python main.py ./logs --smooth ema --show-both -o comparison.png
+tb-visualizer ./logs --smooth ema --show-both -o comparison.png
 ```
 
 ## 📖 Command-Line Arguments
@@ -72,14 +115,14 @@ python main.py ./logs --smooth ema --show-both -o comparison.png
 
 ### Comparing Multiple Experiments
 ```bash
-python main.py ./exp_lr_0.001 ./exp_lr_0.01 ./exp_lr_0.1 \
+tb-visualizer ./exp_lr_0.001 ./exp_lr_0.01 ./exp_lr_0.1 \
   -o learning_rate_comparison.png \
   --max-cols 2
 ```
 
 ### Smoothed Metrics with Custom Dimensions
 ```bash
-python main.py ./training_logs \
+tb-visualizer ./training_logs \
   --smooth ema \
   --smooth-window 15 \
   --width 10 \
@@ -89,7 +132,7 @@ python main.py ./training_logs \
 
 ### Interactive Viewing with Smoothing
 ```bash
-python main.py ./results \
+tb-visualizer ./results \
   --smooth ma \
   --show-both \
   --show
@@ -97,7 +140,7 @@ python main.py ./results \
 
 ### Batch Processing Multiple Experiments
 ```bash
-python main.py ./runs/* \
+tb-visualizer ./runs/* \
   -o final_results.png \
   --width 12 \
   --height 6 \

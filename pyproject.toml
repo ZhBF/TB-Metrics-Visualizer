@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel"]  # 放宽 setuptools 版本要求
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tb-metrics-visualizer"
+version = "0.1.0"
+description = "A powerful batch visualization tool for aggregating and comparing TensorBoard scalar metrics"
+readme = "README.md"
+requires-python = ">=3.6"  # 放宽到 Python 3.6+，兼容更多环境
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["tensorboard", "visualization", "metrics", "deep-learning", "machine-learning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+# 不指定具体版本，使用最宽松的依赖要求
+dependencies = [
+    "numpy",        # 不限制版本，使用最新稳定版
+    "matplotlib",   # 不限制版本，使用最新稳定版
+    "tensorboard",  # 不限制版本，使用最新稳定版
+]
+
+[project.scripts]
+tb-visualizer = "main:main"
+tbviz = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/TB-Metrics-Visualizer"
+Issues = "https://github.com/yourusername/TB-Metrics-Visualizer/issues"
+
+[tool.setuptools]
+py-modules = ["main"]
