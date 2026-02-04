@@ -49,7 +49,7 @@ def load_tb_data(tb_files, base_directories):
         base_directories: base input directories, used to compute relative paths
 
     Returns:
-        dict: key is metric name, value is a list of (steps, values, run_name)
+        dict: key is metric name, value is a list of (steps, values, walltimes, run_name)
     """
     data = defaultdict(list)
 
@@ -94,8 +94,15 @@ def load_tb_data(tb_files, base_directories):
                 if events:
                     steps = [e.step for e in events]
                     values = [e.value for e in events]
+                    walltimes = [e.wall_time for e in events]
 
-                    data[tag].append({"steps": np.array(steps), "values": np.array(values), "run_name": run_name, "file_path": tb_file})
+                    data[tag].append({
+                        "steps": np.array(steps),
+                        "values": np.array(values),
+                        "walltimes": np.array(walltimes),
+                        "run_name": run_name,
+                        "file_path": tb_file
+                    })
 
         except Exception as e:
             print(f"Failed to load file {tb_file}: {e}")
@@ -143,6 +150,7 @@ def create_visualization(
     smooth_method=None,
     smooth_window=10,
     show_raw_and_smooth=False,
+    x_axis="step",
 ):
     """
     Create a combined visualization figure.
@@ -152,6 +160,7 @@ def create_visualization(
         output_path: output image path
         figsize_per_plot: size of each subplot
         max_cols: maximum subplots per row
+        x_axis: x-axis type, "step" or "walltime"
     """
     if not data:
         print("No data to visualize")
@@ -179,23 +188,35 @@ def create_visualization(
         for run_data in runs_data:
             steps = run_data["steps"]
             values = run_data["values"]
+            walltimes = run_data["walltimes"]
             run_name = run_data["run_name"]
 
+            # Choose x-axis data based on parameter
+            if x_axis == "walltime":
+                # Convert walltime to relative time in hours from the first event
+                if len(walltimes) > 0:
+                    x_data = (walltimes - walltimes[0]) / 3600.0  # Convert to hours
+                else:
+                    x_data = walltimes
+            else:
+                x_data = steps
+
             if smooth_method and show_raw_and_smooth:
-                ax.plot(steps, values, label=f"{run_name} (raw)", alpha=0.4, linewidth=1.0)
+                ax.plot(x_data, values, label=f"{run_name} (raw)", alpha=0.4, linewidth=1.0)
                 smooth_values_arr = smooth_values(values, method=smooth_method, window=smooth_window)
-                ax.plot(steps, smooth_values_arr, label=f"{run_name} ({smooth_method})", alpha=0.9, linewidth=1.6)
+                ax.plot(x_data, smooth_values_arr, label=f"{run_name} ({smooth_method})", alpha=0.9, linewidth=1.6)
                 continue
 
             if smooth_method:
                 values = smooth_values(values, method=smooth_method, window=smooth_window)
 
             # Draw curve
-            ax.plot(steps, values, label=run_name, alpha=0.8, linewidth=1.5)
+            ax.plot(x_data, values, label=run_name, alpha=0.8, linewidth=1.5)
 
         # Set title and labels
         ax.set_title(metric_name, fontsize=10, fontweight="bold")
-        ax.set_xlabel("Step", fontsize=9)
+        x_label = "Wall Time (hours)" if x_axis == "walltime" else "Step"
+        ax.set_xlabel(x_label, fontsize=9)
         ax.set_ylabel("Value", fontsize=9)
         ax.grid(True, alpha=0.3)
         ax.tick_params(labelsize=8)
@@ -232,6 +253,7 @@ Examples:
     python draw_tb.py ./run1 ./run2 ./run3
     python draw_tb.py ./experiments/* -o results.png
     python draw_tb.py ./logs -o output.png --max-cols 4
+    python draw_tb.py ./logs --x-axis walltime --smooth ema
         """,
     )
 
@@ -244,6 +266,7 @@ Examples:
     parser.add_argument("--smooth", choices=["ema", "ma"], default=None, help="Enable curve smoothing: ema (exponential) or ma (moving average)")
     parser.add_argument("--smooth-window", type=int, default=10, help="Smoothing window size (default: 10)")
     parser.add_argument("--show-both", action="store_true", help="Show raw curve and smoothed curve together (requires --smooth)")
+    parser.add_argument("--x-axis", choices=["step", "walltime"], default="step", help="X-axis type: step (default) or walltime (in hours)")
 
     args = parser.parse_args()
 
@@ -283,6 +306,7 @@ Examples:
         smooth_method=args.smooth,
         smooth_window=args.smooth_window,
         show_raw_and_smooth=args.show_both,
+        x_axis=args.x_axis,
     )
 
     print("\nDone!")
