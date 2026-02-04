@@ -9,6 +9,7 @@ import argparse
 from pathlib import Path
 from collections import defaultdict
 import numpy as np
+import itertools
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
@@ -178,6 +179,16 @@ def create_visualization(
     fig = plt.figure(figsize=(fig_width, fig_height))
     gs = GridSpec(n_rows, n_cols, figure=fig, hspace=0.4, wspace=0.3)
 
+    # Build a stable color map per run name
+    color_cycle = plt.rcParams.get("axes.prop_cycle", None)
+    colors = []
+    if color_cycle is not None:
+        colors = color_cycle.by_key().get("color", [])
+    if not colors:
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+    color_iter = itertools.cycle(colors)
+    run_color_map = {}
+
     # Create a subplot for each metric
     for idx, (metric_name, runs_data) in enumerate(sorted(data.items())):
         row = idx // n_cols
@@ -201,17 +212,36 @@ def create_visualization(
             else:
                 x_data = steps
 
+            run_color = run_color_map.get(run_name)
+            if run_color is None:
+                run_color = next(color_iter)
+                run_color_map[run_name] = run_color
+
             if smooth_method and show_raw_and_smooth:
-                ax.plot(x_data, values, label=f"{run_name} (raw)", alpha=0.4, linewidth=1.0)
+                raw_line, = ax.plot(
+                    x_data,
+                    values,
+                    label="_nolegend_",
+                    color=run_color,
+                    alpha=0.35,
+                    linewidth=1.0,
+                )
                 smooth_values_arr = smooth_values(values, method=smooth_method, window=smooth_window)
-                ax.plot(x_data, smooth_values_arr, label=f"{run_name} ({smooth_method})", alpha=0.9, linewidth=1.6)
+                ax.plot(
+                    x_data,
+                    smooth_values_arr,
+                    label=run_name,
+                    color=raw_line.get_color(),
+                    alpha=0.9,
+                    linewidth=1.6,
+                )
                 continue
 
             if smooth_method:
                 values = smooth_values(values, method=smooth_method, window=smooth_window)
 
             # Draw curve
-            ax.plot(x_data, values, label=run_name, alpha=0.8, linewidth=1.5)
+            ax.plot(x_data, values, label=run_name, color=run_color, alpha=0.8, linewidth=1.5)
 
         # Set title and labels
         ax.set_title(metric_name, fontsize=10, fontweight="bold")
@@ -221,9 +251,8 @@ def create_visualization(
         ax.grid(True, alpha=0.3)
         ax.tick_params(labelsize=8)
 
-        # Show legend if multiple runs exist
-        if len(runs_data) > 1:
-            ax.legend(fontsize=7, loc="best", framealpha=0.7)
+        # Show legend
+        ax.legend(fontsize=7, loc="best", framealpha=0.7)
 
     # Set overall title
     fig.suptitle("TensorBoard Metrics Visualization", fontsize=16, fontweight="bold", y=0.995)
