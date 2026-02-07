@@ -40,13 +40,14 @@ def find_tb_files(directories):
     return tb_files
 
 
-def load_tb_data(tb_files, base_directories):
+def load_tb_data(tb_files, base_directories, max_step=None):
     """
     Load TensorBoard data.
 
     Args:
         tb_files: list of TensorBoard event file paths
         base_directories: base input directories, used to compute relative paths
+        max_step: maximum step value to include (data beyond this step will be ignored)
 
     Returns:
         dict: key is metric name, value is a list of (steps, values, walltimes, run_name)
@@ -95,6 +96,15 @@ def load_tb_data(tb_files, base_directories):
                     steps = [e.step for e in events]
                     values = [e.value for e in events]
                     walltimes = [e.wall_time for e in events]
+
+                    # Filter data beyond max_step if specified
+                    if max_step is not None:
+                        filtered_data = [(s, v, w) for s, v, w in zip(steps, values, walltimes) if s <= max_step]
+                        if filtered_data:
+                            steps, values, walltimes = zip(*filtered_data)
+                        else:
+                            # Skip this tag if no data remains after filtering
+                            continue
 
                     data[tag].append({
                         "steps": np.array(steps),
@@ -267,6 +277,7 @@ Examples:
     parser.add_argument("--smooth-window", type=int, default=10, help="Smoothing window size (default: 10)")
     parser.add_argument("--show-both", action="store_true", help="Show raw curve and smoothed curve together (requires --smooth)")
     parser.add_argument("--x-axis", choices=["step", "walltime"], default="step", help="X-axis type: step (default) or walltime (in hours)")
+    parser.add_argument("--max-step", type=int, default=None, help="Maximum step value to include (data beyond this step will be ignored)")
 
     args = parser.parse_args()
 
@@ -287,7 +298,7 @@ Examples:
     print()
 
     # Load data, passing base directories to compute relative paths
-    data = load_tb_data(tb_files, args.directories)
+    data = load_tb_data(tb_files, args.directories, max_step=args.max_step)
 
     if not data:
         print("Error: failed to load any data")
