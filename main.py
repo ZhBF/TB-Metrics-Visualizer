@@ -71,7 +71,12 @@ def load_tb_data(tb_files, base_directories, max_step=None):
             try:
                 # Compute relative path to base directory
                 rel_path = log_dir.relative_to(base_path)
-                run_name = str(rel_path)
+                # Include base directory name to distinguish runs from different directories
+                base_name = base_path.name
+                if rel_path.parts:  # If there's a relative path
+                    run_name = f"{base_name}/{rel_path}"
+                else:  # If log_dir is exactly the base_path
+                    run_name = base_name
                 break
             except ValueError:
                 # Not a subdirectory; try the next base directory
