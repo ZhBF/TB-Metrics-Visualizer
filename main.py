@@ -167,6 +167,7 @@ def create_visualization(
     smooth_window=10,
     show_raw_and_smooth=False,
     x_axis="step",
+    font_scale=1.0,
 ):
     """
     Create a combined visualization figure.
@@ -177,6 +178,7 @@ def create_visualization(
         figsize_per_plot: size of each subplot
         max_cols: maximum subplots per row
         x_axis: x-axis type, "step" or "walltime"
+        font_scale: font size scaling factor (default: 1.0)
     """
     if not data:
         print("No data to visualize")
@@ -239,7 +241,7 @@ def create_visualization(
                     label="_nolegend_",
                     color=run_color,
                     alpha=0.35,
-                    linewidth=1.0,
+                    linewidth=1.0 * font_scale,
                 )
                 smooth_values_arr = smooth_values(values, method=smooth_method, window=smooth_window)
                 ax.plot(
@@ -248,7 +250,7 @@ def create_visualization(
                     label=run_name,
                     color=raw_line.get_color(),
                     alpha=0.9,
-                    linewidth=1.6,
+                    linewidth=1.6 * font_scale,
                 )
                 continue
 
@@ -256,21 +258,21 @@ def create_visualization(
                 values = smooth_values(values, method=smooth_method, window=smooth_window)
 
             # Draw curve
-            ax.plot(x_data, values, label=run_name, color=run_color, alpha=0.8, linewidth=1.5)
+            ax.plot(x_data, values, label=run_name, color=run_color, alpha=0.8, linewidth=1.5 * font_scale)
 
         # Set title and labels
-        ax.set_title(metric_name, fontsize=10, fontweight="bold")
+        ax.set_title(metric_name, fontsize=int(10 * font_scale), fontweight="bold")
         x_label = "Wall Time (hours)" if x_axis == "walltime" else "Step"
-        ax.set_xlabel(x_label, fontsize=9)
-        ax.set_ylabel("Value", fontsize=9)
+        ax.set_xlabel(x_label, fontsize=int(9 * font_scale))
+        ax.set_ylabel("Value", fontsize=int(9 * font_scale))
         ax.grid(True, alpha=0.3)
-        ax.tick_params(labelsize=8)
+        ax.tick_params(labelsize=int(8 * font_scale))
 
         # Show legend
-        ax.legend(fontsize=7, loc="best", framealpha=0.7)
+        ax.legend(fontsize=int(7 * font_scale), loc="best", framealpha=0.7)
 
     # Set overall title
-    fig.suptitle("TensorBoard Metrics Visualization", fontsize=16, fontweight="bold", y=0.995)
+    fig.suptitle("TensorBoard Metrics Visualization", fontsize=int(16 * font_scale), fontweight="bold", y=0.995)
 
     # Save image
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -312,6 +314,7 @@ Examples:
     parser.add_argument("--show-both", action="store_true", help="Show raw curve and smoothed curve together (requires --smooth)")
     parser.add_argument("--x-axis", choices=["step", "walltime"], default="step", help="X-axis type: step (default) or walltime (in hours)")
     parser.add_argument("--max-step", type=int, default=None, help="Maximum step value to include (data beyond this step will be ignored)")
+    parser.add_argument("--font-scale", type=float, default=1.0, help="Font size scaling factor (default: 1.0, try 1.5 for larger fonts or 0.8 for smaller)")
 
     args = parser.parse_args()
 
@@ -352,6 +355,7 @@ Examples:
         smooth_window=args.smooth_window,
         show_raw_and_smooth=args.show_both,
         x_axis=args.x_axis,
+        font_scale=args.font_scale,
     )
 
     print("\nDone!")
